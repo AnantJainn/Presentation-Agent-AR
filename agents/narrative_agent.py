@@ -6,36 +6,36 @@ def narrative_agent(state):
     tex_content = state.get("tex_content", "")
     audience = state.get("audience", "General Audience")
 
-    # If text is too long for context window, we truncate (simple logic for now)
-    if len(tex_content) > 15000:
-        tex_content = tex_content[:15000] + "... [Truncated]"
+    # Truncate if too huge
+    if len(tex_content) > 20000:
+        tex_content = tex_content[:20000] + "... [Truncated]"
 
     prompt = f"""
-You are an expert Research Assistant. 
-Analyze the following LaTeX (TeX) source code of a research paper and convert it into a presentation structure.
+You are an expert Research Assistant transforming a Paper into a Presentation.
 
-INPUT TEX:
+INPUT CONTEXT (LaTeX Source):
 \"\"\"
 {tex_content}
 \"\"\"
 
 TASK:
-1. Extract the Title and Authors.
-2. Summarize the paper into 5-7 logical slides (e.g., Intro, Problem, Method, Results, Conclusion).
-3. For "content", write a clear, academic paragraph (50 words).
-4. For "visual_description", describe a relevant scientific diagram or image prompt based on that section.
+1. Analyze the structure (Title, Authors, Abstract, Sections).
+2. Create a presentation structure (5-7 slides).
+3. **CRITICAL:** The 'content' and 'key_points' must be **PLAIN ENGLISH**. 
+   - DO NOT write LaTeX code (e.g. do NOT write \\frac{{a}}{{b}}, write 'a divided by b').
+   - DO NOT use backslashes.
 
-Return ONLY valid JSON. No markdown.
+Return ONLY valid JSON. No Markdown.
 
 Schema:
 {{
   "title": "Paper Title",
   "slides": [
     {{
-      "title": "Slide Title (e.g., Methodology)",
-      "content": "Very Detailed academic explanation...",
-      "key_points": ["Bullet 1", "Bullet 2"],
-      "visual_description": "A diagram showing a quantum circuit connected to a classical neural network"
+      "title": "Slide Title",
+      "content": "Summary paragraph in plain text.",
+      "key_points": ["Point 1", "Point 2"],
+      "visual_description": "Description of a diagram or image for this section."
     }}
   ]
 }}
