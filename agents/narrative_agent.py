@@ -7,10 +7,10 @@ def narrative_agent(state):
     audience = state["audience"]
 
     prompt = f"""
-You are a premium presentation designer for a high-stakes keynote.
+You are a Professor creating a deep-dive lecture slide deck.
 
 Return ONLY valid JSON.
-No markdown. No explanation.
+No markdown.
 
 Schema:
 {{
@@ -19,30 +19,22 @@ Schema:
   "slides": [
     {{
       "title": "string",
-      "bullets": ["string 1", "string 2", "string 3"],
-      "design": {{
-        "theme_color": "#HexColor",
-        "visual_keyword": "microchip | dna | robot | brain | network | doctor"
-      }}
+      "content": "A very detailed, 50-80 word academic paragraph explaining the concept in depth. Use formal language.",
+      "key_points": ["Key Point 1", "Key Point 2"],
+      "visual_keyword": "microchip | dna | brain | network | doctor | robot"
     }}
   ]
 }}
 
-Audience: {audience}
 Topic: {topic}
+Audience: {audience}
 
 Constraints:
-1. **MAXIMUM 3 Bullets per slide.**
-2. **MAXIMUM 12 words per bullet.** (Crucial for modern design).
-3. **No sub-bullets.**
-4. **Visuals:** Choose one keyword that best fits the slide concept.
-5. Create exactly 5 slides.
+1. Create 8-10 slides.
+2. The 'content' field must be DETAILED and EXPLANATORY (not just bullets).
+3. Select the best visual keyword for the slide context.
 """
 
     content = call_llm(prompt)
-    print("\n===== RAW LLM OUTPUT =====")
-    print(content)
-    print("===== END OUTPUT =====\n")
-
     state["presentation"] = extract_json(content)
     return state
