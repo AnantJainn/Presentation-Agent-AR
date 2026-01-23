@@ -19,14 +19,14 @@ Schema:
   "slides": [
     {{
       "title": "string",
-      "bullets": ["detailed string 1", "detailed string 2"],
-      "layout": "title_content | two_column",
+      "bullets": ["string 1", "string 2"],
+      "layout": "two_column",
       "design": {{
         "background": "light | dark | gradient_blue | gradient_purple",
         "title_font": "Montserrat | Inter | Poppins",
         "accent_color": "#RRGGBB",
-        "visual": "icon:healthcare | image:mri_scan | none",
-        "animation": "fade_in | slide_up | none"
+        "visual": "quantum_computer | dna | brain_scan | chip | healthcare | generic",
+        "animation": "fade_in"
       }}
     }}
   ]
@@ -35,11 +35,10 @@ Schema:
 Audience: {audience}
 Topic: {topic}
 
-Design rules:
-- Provide detailed, comprehensive academic content for each bullet point.
-- Ensure 4-6 detailed bullet points per slide.
-- Use strong professional vocabulary.
-- Create 5-7 slides total.
+Design Constraints:
+1. **Concise & High-Density**: Use academic language but keep bullets under 20 words each to prevent text overflow.
+2. **Visuals**: Choose the most relevant 'visual' keyword from the list provided in the schema.
+3. **Structure**: 5-7 slides maximum.
 """
 
     content = call_llm(prompt)
