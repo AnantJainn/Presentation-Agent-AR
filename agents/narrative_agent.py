@@ -19,8 +19,8 @@ INPUT CONTEXT (LaTeX Source):
 \"\"\"
 
 TASK:
-1. Analyze the structure (Title, Authors, Abstract, Sections).
-2. Create a presentation structure (5-7 slides).
+1. Analyze the structure (Title, Authors, Abstract, Sections, Working Mechanism, Related Work).
+2. Create a presentation structure (8-10 slides) that should very detail and cover all main things.
 3. **CRITICAL:** The 'content' and 'key_points' must be **PLAIN ENGLISH**. 
    - DO NOT write LaTeX code (e.g. do NOT write \\frac{{a}}{{b}}, write 'a divided by b').
    - DO NOT use backslashes.
