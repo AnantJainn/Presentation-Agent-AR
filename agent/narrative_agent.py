@@ -15,9 +15,14 @@ Audience: {audience}
 Rules:
 - Max 10 slides
 - Academic structure
-- Output ONLY JSON
+- Output ONLY valid JSON
 """
 
     content = call_llm(prompt)
+
+    print("\n===== RAW LLM OUTPUT =====")
+    print(content)
+    print("===== END OUTPUT =====\n")
+
     state["presentation"] = json.loads(content)
     return state
