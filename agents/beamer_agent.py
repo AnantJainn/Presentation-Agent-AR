@@ -30,7 +30,7 @@ def beamer_agent(state):
         
         # Slide Structure
         slide_block = f"""
-\\begin{{frame}}{{{title}}}
+\\begin{{frame}}[shrink]{{{title}}}
     \\begin{{columns}}
         \\column{{0.6\\textwidth}}
         {content}
