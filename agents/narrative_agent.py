@@ -6,8 +6,10 @@ def narrative_agent(state):
     audience = state["audience"]
 
     prompt = f"""
-You MUST output ONLY valid JSON.
-No explanations. No markdown. No text.
+You are a professional presentation designer.
+
+Return ONLY valid JSON.
+No markdown. No explanation.
 
 Schema:
 {{
@@ -17,14 +19,27 @@ Schema:
     {{
       "title": "string",
       "bullets": ["string"],
-      "layout": "title_content"
+      "layout": "title_content | two_column",
+      "design": {{
+        "background": "light | dark | gradient_blue | gradient_purple",
+        "title_font": "Montserrat | Inter | Poppins",
+        "accent_color": "#RRGGBB",
+        "visual": "icon:healthcare | image:mri_scan | none",
+        "animation": "fade_in | slide_up | none"
+      }}
     }}
   ]
 }}
 
-Topic: {topic}
 Audience: {audience}
+Topic: {topic}
+
+Design rules:
+- Minimal text
+- Strong visual hierarchy
+- Academic but modern
 """
+
 
     content = call_llm(prompt)
 
