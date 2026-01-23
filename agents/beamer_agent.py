@@ -1,4 +1,4 @@
-# agents/beamer_agent.py (NEW FILE)
+# agents/beamer_agent.py
 
 def beamer_agent(state):
     data = state["presentation"]
@@ -28,23 +28,14 @@ def beamer_agent(state):
         content = slide.get("content", "")
         bullets = "\n".join([f"    \\item {bp}" for bp in slide.get("key_points", [])])
         
-        # Slide Structure
+        # Slide Structure (UPDATED: Full width, no visual column, auto-shrink)
         slide_block = f"""
 \\begin{{frame}}[shrink]{{{title}}}
-    \\begin{{columns}}
-        \\column{{0.6\\textwidth}}
-        {content}
-        \\vspace{{0.5cm}}
-        \\begin{{itemize}}
-        {bullets}
-        \\end{{itemize}}
-
-        \\column{{0.4\\textwidth}}
-        \\centering
-        % Placeholder for image - in a real agent, we would download the AI image and include it
-        % \\includegraphics[width=\\textwidth]{{image.png}}
-        \\textit{{[Visual: {slide.get('visual_description', 'Diagram')}]}}
-    \\end{{columns}}
+    {content}
+    \\vspace{{0.5cm}}
+    \\begin{{itemize}}
+    {bullets}
+    \\end{{itemize}}
 \\end{{frame}}
 """
         latex_code += slide_block
