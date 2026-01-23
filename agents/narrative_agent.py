@@ -3,37 +3,42 @@ from llm import call_llm
 from utils.json_utils import extract_json
 
 def narrative_agent(state):
-    topic = state["topic"]
-    audience = state["audience"]
+    tex_content = state.get("tex_content", "")
+    audience = state.get("audience", "General Audience")
+
+    # If text is too long for context window, we truncate (simple logic for now)
+    if len(tex_content) > 15000:
+        tex_content = tex_content[:15000] + "... [Truncated]"
 
     prompt = f"""
-You are a creative director for a high-end presentation.
+You are an expert Research Assistant. 
+Analyze the following LaTeX (TeX) source code of a research paper and convert it into a presentation structure.
 
-Return ONLY valid JSON.
-No markdown.
+INPUT TEX:
+\"\"\"
+{tex_content}
+\"\"\"
+
+TASK:
+1. Extract the Title and Authors.
+2. Summarize the paper into 5-7 logical slides (e.g., Intro, Problem, Method, Results, Conclusion).
+3. For "content", write a clear, academic paragraph (50 words).
+4. For "visual_description", describe a relevant scientific diagram or image prompt based on that section.
+
+Return ONLY valid JSON. No markdown.
 
 Schema:
 {{
-  "audience": "{audience}",
-  "theme": "string",
+  "title": "Paper Title",
   "slides": [
     {{
-      "title": "Short, Punchy Title (Max 6 words)",
-      "content": "A detailed, engaging paragraph (50-70 words) explaining the concept.",
-      "key_points": ["Key Point 1", "Key Point 2"],
-      "visual_description": "A descriptive prompt for an AI image generator. Example: 'futuristic quantum chip glowing blue in a sterile lab'"
+      "title": "Slide Title (e.g., Methodology)",
+      "content": "Very Detailed academic explanation...",
+      "key_points": ["Bullet 1", "Bullet 2"],
+      "visual_description": "A diagram showing a quantum circuit connected to a classical neural network"
     }}
   ]
 }}
-
-Topic: {topic}
-Audience: {audience}
-
-Constraints:
-1. Create 8-10 slides.
-2. Ensure 'visual_description' is specific and artistic.
-3. Keep titles short to fit the layout.
-4. The 'content' field must be DETAILED and EXPLANATORY (not just bullets).
 """
 
     content = call_llm(prompt)
