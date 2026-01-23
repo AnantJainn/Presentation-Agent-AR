@@ -1,3 +1,4 @@
+# agents/narrative_agent.py
 from llm import call_llm
 from utils.json_utils import extract_json
 
@@ -6,7 +7,7 @@ def narrative_agent(state):
     audience = state["audience"]
 
     prompt = f"""
-You are a professional presentation designer.
+You are a professional academic presentation designer.
 
 Return ONLY valid JSON.
 No markdown. No explanation.
@@ -18,7 +19,7 @@ Schema:
   "slides": [
     {{
       "title": "string",
-      "bullets": ["string"],
+      "bullets": ["detailed string 1", "detailed string 2"],
       "layout": "title_content | two_column",
       "design": {{
         "background": "light | dark | gradient_blue | gradient_purple",
@@ -35,15 +36,14 @@ Audience: {audience}
 Topic: {topic}
 
 Design rules:
-- Minimal text
-- Strong visual hierarchy
-- Academic but modern
+- Provide detailed, comprehensive academic content for each bullet point.
+- Ensure 4-6 detailed bullet points per slide.
+- Use strong professional vocabulary.
+- Create 5-7 slides total.
 """
-
 
     content = call_llm(prompt)
 
-    # 🔍 Debug once (keep for now)
     print("\n===== RAW LLM OUTPUT =====")
     print(content)
     print("===== END OUTPUT =====\n")
