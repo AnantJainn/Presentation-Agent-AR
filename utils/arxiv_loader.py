@@ -164,7 +164,7 @@ def download_arxiv_source(url, save_path):
     return save_path
 
 def find_main_tex_file(directory):
-    """
+    r"""
     Heuristic to find the main .tex file:
     1. Looks for a file with \documentclass
     2. Prioritizes files named 'main.tex' or 'ms.tex'
@@ -188,7 +188,7 @@ def find_main_tex_file(directory):
     return tex_files[0] # Fallback to first found
 
 def flatten_tex(main_file_path):
-    """
+    r"""
     Reads the main .tex file and recursively replaces \input{...} 
     with the actual content of the referenced files.
     """
@@ -220,7 +220,7 @@ def flatten_tex(main_file_path):
 def load_tex_from_source(input_source):
     """
     Main entry point.
-    input_source: Can be an ArXiv URL or a local .tar path (from file picker).
+    input_source: Can be an ArXiv URL or a local .tar path.
     Returns: The full flattened LaTeX string.
     """
     temp_dir = tempfile.mkdtemp()
@@ -256,6 +256,6 @@ def load_tex_from_source(input_source):
         return full_content
 
     finally:
-        # Cleanup temp directory (only if we downloaded/created it)
+        # Cleanup temp directory (only if we downloaded it)
         if is_url(input_source):
             shutil.rmtree(temp_dir, ignore_errors=True)

@@ -61,14 +61,12 @@
 import env
 from graph import graph
 import os
-import tkinter as tk
-from tkinter import filedialog
 from utils.arxiv_loader import load_tex_from_source
 
 def get_user_input():
     print("\n--- Presentation Source ---")
     print("1. Enter ArXiv Link")
-    print("2. Upload .tar File (Select from Disk)")
+    print("2. Enter Path to Local .tar File")
     print("3. Use Dummy Data")
     
     choice = input("👉 Select Option (1/2/3): ").strip()
@@ -77,18 +75,15 @@ def get_user_input():
         return input("🔗 Paste ArXiv URL: ").strip()
         
     elif choice == "2":
-        print("📂 Opening file dialog...")
-        # Open the standard OS file picker
-        root = tk.Tk()
-        root.withdraw() # Hide the main empty Tk window
-        file_path = filedialog.askopenfilename(
-            title="Select Source Tarball",
-            filetypes=[("TAR Archive", "*.tar"), ("GZIP Archive", "*.gz"), ("All Files", "*.*")]
-        )
-        if not file_path:
-            print("❌ No file selected. Exiting.")
+        # REPLACED GUI with simple text input
+        path = input("📂 Enter the full path to the .tar file: ").strip()
+        # Remove quotes if user copied as "path/to/file"
+        path = path.strip('"').strip("'")
+        
+        if not os.path.exists(path):
+            print(f"❌ Error: File not found at '{path}'")
             exit()
-        return file_path
+        return path
         
     elif choice == "3":
         return None # Triggers dummy data fallback
