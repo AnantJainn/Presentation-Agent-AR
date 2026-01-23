@@ -1,181 +1,175 @@
 # agents/google_slides_agent.py
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
-import time
+import uuid
 
-# --- PUBLIC IMAGE LIBRARY (Reliable Wikimedia/Unsplash URLs) ---
+# --- ASSET LIBRARY ---
 IMAGE_MAP = {
-    "quantum_computer": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IBM_Q_System_One_2019.jpg/800px-IBM_Q_System_One_2019.jpg",
+    "microchip": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Raspberry_Pi_4_Model_B_-_Side.jpg/800px-Raspberry_Pi_4_Model_B_-_Side.jpg",
     "dna": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/DNA_Overview.png/800px-DNA_Overview.png",
-    "brain_scan": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Computed_tomography_of_human_brain_-_large.png/800px-Computed_tomography_of_human_brain_-_large.png",
-    "chip": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Raspberry_Pi_4_Model_B_-_Side.jpg/800px-Raspberry_Pi_4_Model_B_-_Side.jpg",
-    "healthcare": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Physician_Assistant_Checking_Patient.jpg/800px-Physician_Assistant_Checking_Patient.jpg",
-    "generic": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python_logo_notext.svg/800px-Python_logo_notext.svg.png"
+    "robot": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Honda_ASIMO_at_Auto_Shanghai_2011.jpg/800px-Honda_ASIMO_at_Auto_Shanghai_2011.jpg",
+    "brain": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Computed_tomography_of_human_brain_-_large.png/800px-Computed_tomography_of_human_brain_-_large.png",
+    "network": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Social_Network_Analysis_Visualization.png/800px-Social_Network_Analysis_Visualization.png",
+    "doctor": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Physician_Assistant_Checking_Patient.jpg/800px-Physician_Assistant_Checking_Patient.jpg"
 }
+
+# --- UNIT CONVERSION (EMU) ---
+PT_TO_EMU = 12700
 
 def google_slides_agent(state):
     print("🚀 Connecting to Google Services...")
     creds = Credentials.from_service_account_file(
         "credentials.json",
-        scopes=[
-            "https://www.googleapis.com/auth/presentations",
-            "https://www.googleapis.com/auth/drive"
-        ]
+        scopes=["https://www.googleapis.com/auth/presentations", "https://www.googleapis.com/auth/drive"]
     )
-
     slides_service = build("slides", "v1", credentials=creds)
     drive_service = build("drive", "v3", credentials=creds)
 
-    # 1️⃣ Create File
-    FOLDER_ID = "1HZWU82y-D0BpDKUS9jFDYfDCp4f3Hyt4"
-    presentation_title = state.get("topic", "Generated Presentation")
+    # 1. Create File
+    # IMPORTANT: Ensure this FOLDER_ID is shared with the client_email from credentials.json as 'Editor'
+    FOLDER_ID = "1HZWU82y-D0BpDKUS9jFDYfDCp4f3Hyt4" 
+    presentation_title = state.get("topic", "Modern Presentation")
     
     print(f"📂 Creating '{presentation_title}'...")
+    
+    # FIX: We create the file directly inside the folder. 
+    # Because the folder belongs to YOU, the file consumes YOUR quota, not the Service Account's.
     file_metadata = {
         'name': presentation_title,
         'mimeType': 'application/vnd.google-apps.presentation',
         'parents': [FOLDER_ID] 
     }
     
-    presentation_file = drive_service.files().create(
-        body=file_metadata,
-        fields='id'
-    ).execute()
-    
-    presentation_id = presentation_file.get('id')
-    print(f"✅ Created ID: {presentation_id}")
+    try:
+        presentation = drive_service.files().create(
+            body=file_metadata,
+            fields='id',
+            supportsAllDrives=True  # Helpful if using Shared Drives
+        ).execute()
+    except Exception as e:
+        print(f"❌ ERROR: Could not create file. Check if Service Account has 'Editor' access to folder {FOLDER_ID}")
+        print(f"Error details: {e}")
+        return state
 
-    # 2️⃣ Generate Slides
+    deck_id = presentation.get('id')
+    print(f"✅ Created ID: {deck_id}")
+
+    # 2. Build Slides
     slides_data = state["presentation"]["slides"]
     requests = []
-    slide_ids = []
-
+    
     for i, slide in enumerate(slides_data):
-        unique_id = f"slide_{i}_gen"
-        slide_ids.append(unique_id)
+        slide_id = f"slide_{uuid.uuid4().hex}"
         
-        # Force 2-Column Layout (Left=Text, Right=Image)
+        # A. Create BLANK Slide
         requests.append({
             "createSlide": {
-                "objectId": unique_id,
+                "objectId": slide_id,
                 "insertionIndex": i + 1,
-                "slideLayoutReference": {"predefinedLayout": "TITLE_AND_TWO_COLUMNS"}
+                "slideLayoutReference": {"predefinedLayout": "BLANK"}
             }
         })
         
-        # Background Color
-        if slide.get("design"):
-            bg_color = slide["design"].get("background", "light")
-            rgb = {"red": 1, "green": 1, "blue": 1} # Default white
-            if bg_color == "dark": rgb = {"red": 0.1, "green": 0.1, "blue": 0.2}
-            elif bg_color == "gradient_blue": rgb = {"red": 0.9, "green": 0.95, "blue": 1.0}
-            elif bg_color == "gradient_purple": rgb = {"red": 0.95, "green": 0.9, "blue": 1.0}
+        # ... [SAME DESIGN LOGIC AS BEFORE] ...
+        
+        # B. Design Elements (The "Canva" Look)
+        # 1. Accent Sidebar (Left)
+        theme_hex = slide["design"].get("theme_color", "#4285F4")
+        # Convert hex to 0-1 range
+        hex_clean = theme_hex.lstrip('#')
+        if len(hex_clean) == 6:
+            r, g, b = [int(hex_clean[i:i+2], 16)/255.0 for i in (0, 2, 4)]
+        else:
+            r, g, b = 0.2, 0.4, 0.8 # Fallback blue
 
-            requests.append({
-                "updatePageProperties": {
-                    "objectId": unique_id,
-                    "pageProperties": {
-                        "pageBackgroundFill": {"solidFill": {"color": {"rgbColor": rgb}}}
-                    },
-                    "fields": "pageBackgroundFill"
+        requests.append({
+            "createShape": {
+                "objectId": f"accent_{slide_id}",
+                "shapeType": "RECTANGLE",
+                "elementProperties": {
+                    "pageObjectId": slide_id,
+                    "size": {"width": {"magnitude": 30, "unit": "PT"}, "height": {"magnitude": 405, "unit": "PT"}}, 
+                    "transform": {"scaleX": 1, "scaleY": 1, "translateX": 0, "translateY": 0, "unit": "PT"}
                 }
-            })
+            }
+        })
+        requests.append({
+            "updateShapeProperties": {
+                "objectId": f"accent_{slide_id}",
+                "shapeProperties": {
+                    "shapeBackgroundFill": {"solidFill": {"color": {"rgbColor": {"red": r, "green": g, "blue": b}}}},
+                    "outline": {"propertyState": "NOT_RENDERED"}
+                },
+                "fields": "shapeBackgroundFill,outline"
+            }
+        })
 
-    # Execute Batch 1: Create Slides
+        # 2. Title Text (Top Left)
+        title_box_id = f"title_{slide_id}"
+        requests.append({
+            "createShape": {
+                "objectId": title_box_id,
+                "shapeType": "TEXT_BOX",
+                "elementProperties": {
+                    "pageObjectId": slide_id,
+                    "size": {"width": {"magnitude": 500, "unit": "PT"}, "height": {"magnitude": 60, "unit": "PT"}},
+                    "transform": {"scaleX": 1, "scaleY": 1, "translateX": 50 * PT_TO_EMU, "translateY": 30 * PT_TO_EMU, "unit": "EMU"}
+                }
+            }
+        })
+        requests.append({"insertText": {"objectId": title_box_id, "text": slide["title"]}})
+        requests.append({
+            "updateTextStyle": {
+                "objectId": title_box_id,
+                "style": {"fontSize": {"magnitude": 28, "unit": "PT"}, "bold": True, "fontFamily": "Montserrat", "foregroundColor": {"opaqueColor": {"themeColor": "DARK1"}}},
+                "fields": "fontSize,bold,fontFamily,foregroundColor"
+            }
+        })
+
+        # 3. Content Body (Left Column)
+        body_box_id = f"body_{slide_id}"
+        bullet_text = "\n\n".join([f"• {b}" for b in slide["bullets"]]) 
+        
+        requests.append({
+            "createShape": {
+                "objectId": body_box_id,
+                "shapeType": "TEXT_BOX",
+                "elementProperties": {
+                    "pageObjectId": slide_id,
+                    "size": {"width": {"magnitude": 350, "unit": "PT"}, "height": {"magnitude": 300, "unit": "PT"}},
+                    "transform": {"scaleX": 1, "scaleY": 1, "translateX": 50 * PT_TO_EMU, "translateY": 110 * PT_TO_EMU, "unit": "EMU"}
+                }
+            }
+        })
+        requests.append({"insertText": {"objectId": body_box_id, "text": bullet_text}})
+        requests.append({
+            "updateTextStyle": {
+                "objectId": body_box_id,
+                "style": {"fontSize": {"magnitude": 14, "unit": "PT"}, "fontFamily": "Inter", "foregroundColor": {"opaqueColor": {"themeColor": "TEXT1"}}},
+                "fields": "fontSize,fontFamily,foregroundColor"
+            }
+        })
+
+        # 4. Image (Right Column)
+        visual_key = slide["design"].get("visual_keyword", "microchip")
+        img_url = IMAGE_MAP.get(visual_key, IMAGE_MAP["microchip"])
+        
+        requests.append({
+            "createImage": {
+                "url": img_url,
+                "elementProperties": {
+                    "pageObjectId": slide_id,
+                    "size": {"width": {"magnitude": 300, "unit": "PT"}, "height": {"magnitude": 250, "unit": "PT"}},
+                    "transform": {"scaleX": 1, "scaleY": 1, "translateX": 400 * PT_TO_EMU, "translateY": 100 * PT_TO_EMU, "unit": "EMU"}
+                }
+            }
+        })
+
+    # Execute all
     if requests:
-        slides_service.presentations().batchUpdate(
-            presentationId=presentation_id,
-            body={'requests': requests}
-        ).execute()
+        print("🎨 Painting slides...")
+        slides_service.presentations().batchUpdate(presentationId=deck_id, body={'requests': requests}).execute()
 
-    # 3️⃣ Populate Content (Text + Images)
-    prs = slides_service.presentations().get(presentationId=presentation_id).execute()
-    text_requests = []
-    
-    for i, slide_obj in enumerate(prs.get("slides", [])):
-        page_id = slide_obj["objectId"]
-        if page_id not in slide_ids: continue
-            
-        data_index = slide_ids.index(page_id)
-        slide_content = slides_data[data_index]
-        
-        # Identify Placeholders
-        title_id, body_id, image_placeholder_id = None, None, None
-        
-        # In TITLE_AND_TWO_COLUMNS: Index 0=Title, Index 1=Left Body, Index 2=Right Body
-        placeholders = []
-        for element in slide_obj.get("pageElements", []):
-            if "shape" in element and "placeholder" in element["shape"]:
-                placeholders.append(element)
-        
-        # Sort by vertical position (Y) to separate Title from Body, then X for columns
-        # (Simplified approach relying on standard API order)
-        for element in placeholders:
-            type_ = element["shape"]["placeholder"]["type"]
-            idx = element["shape"]["placeholder"].get("index", 0)
-            
-            if type_ == "TITLE" or type_ == "CENTERED_TITLE":
-                title_id = element["objectId"]
-            elif type_ == "BODY":
-                if body_id is None: body_id = element["objectId"] # First body (Left)
-                else: image_placeholder_id = element["objectId"]  # Second body (Right)
-
-        # A. Insert Title
-        if title_id:
-            text_requests.append({"insertText": {"objectId": title_id, "text": slide_content["title"]}})
-
-        # B. Insert Bullets (Left Column) & Fix Font Size
-        if body_id and slide_content.get("bullets"):
-            bullet_text = "\n".join(slide_content["bullets"])
-            text_requests.append({"insertText": {"objectId": body_id, "text": bullet_text}})
-            
-            # Force smaller font size to prevent overflow
-            text_requests.append({
-                "updateTextStyle": {
-                    "objectId": body_id,
-                    "style": {
-                        "fontSize": {"magnitude": 11, "unit": "PT"},
-                        "bold": False
-                    },
-                    "fields": "fontSize,bold"
-                }
-            })
-
-        # C. Insert Image (Right Column)
-        if image_placeholder_id:
-            visual_key = slide_content.get("design", {}).get("visual", "generic")
-            # Clean key (e.g. "image:mri_scan" -> "mri_scan")
-            if ":" in visual_key: visual_key = visual_key.split(":")[1]
-            
-            # Fallback to generic if key not found
-            image_url = IMAGE_MAP.get(visual_key, IMAGE_MAP["generic"])
-            
-            # We replace the placeholder with the image
-            text_requests.append({
-                "createImage": {
-                    "url": image_url,
-                    "elementProperties": {
-                        "pageObjectId": page_id,
-                        # We use the position of the second column placeholder
-                        "size": {"height": {"magnitude": 300, "unit": "PT"}, "width": {"magnitude": 400, "unit": "PT"}},
-                        "transform": {
-                            "scaleX": 1, "scaleY": 1,
-                            "translateX": 4500000, # Approx right side (EMU)
-                            "translateY": 1500000,
-                            "unit": "EMU"
-                        }
-                    }
-                }
-            })
-            # Remove the empty text box that was there
-            text_requests.append({"deleteObject": {"objectId": image_placeholder_id}})
-
-    if text_requests:
-        slides_service.presentations().batchUpdate(
-            presentationId=presentation_id,
-            body={'requests': text_requests}
-        ).execute()
-
-    print("✨ Slides populated with Text & Images!")
-    state["google_slides_id"] = presentation_id
+    print("✨ Modern Deck Generated!")
+    state["google_slides_id"] = deck_id
     return state

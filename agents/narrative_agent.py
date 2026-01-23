@@ -7,7 +7,7 @@ def narrative_agent(state):
     audience = state["audience"]
 
     prompt = f"""
-You are a professional academic presentation designer.
+You are a premium presentation designer for a high-stakes keynote.
 
 Return ONLY valid JSON.
 No markdown. No explanation.
@@ -19,14 +19,10 @@ Schema:
   "slides": [
     {{
       "title": "string",
-      "bullets": ["string 1", "string 2"],
-      "layout": "two_column",
+      "bullets": ["string 1", "string 2", "string 3"],
       "design": {{
-        "background": "light | dark | gradient_blue | gradient_purple",
-        "title_font": "Montserrat | Inter | Poppins",
-        "accent_color": "#RRGGBB",
-        "visual": "quantum_computer | dna | brain_scan | chip | healthcare | generic",
-        "animation": "fade_in"
+        "theme_color": "#HexColor",
+        "visual_keyword": "microchip | dna | robot | brain | network | doctor"
       }}
     }}
   ]
@@ -35,14 +31,15 @@ Schema:
 Audience: {audience}
 Topic: {topic}
 
-Design Constraints:
-1. **Concise & High-Density**: Use academic language but keep bullets under 20 words each to prevent text overflow.
-2. **Visuals**: Choose the most relevant 'visual' keyword from the list provided in the schema.
-3. **Structure**: 5-7 slides maximum.
+Constraints:
+1. **MAXIMUM 3 Bullets per slide.**
+2. **MAXIMUM 12 words per bullet.** (Crucial for modern design).
+3. **No sub-bullets.**
+4. **Visuals:** Choose one keyword that best fits the slide concept.
+5. Create exactly 5 slides.
 """
 
     content = call_llm(prompt)
-
     print("\n===== RAW LLM OUTPUT =====")
     print(content)
     print("===== END OUTPUT =====\n")
