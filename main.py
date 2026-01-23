@@ -21,7 +21,7 @@ Our method achieves 99\% fidelity with 100x fewer measurements.
 
 state = {
     "tex_content": dummy_tex,   # <--- Put your real TeX here
-    "output_format": "beamer",  # <--- Select 'beamer' or 'pptx'
+    "output_format": "pptx",  # <--- Select 'beamer' or 'pptx'
     "audience": "PhD Researchers"
 }
 
