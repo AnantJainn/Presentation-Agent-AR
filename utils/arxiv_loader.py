@@ -133,140 +133,6 @@
 
 
 
-# # utils/arxiv_loader.py
-# import os
-# import tarfile
-# import requests
-# import shutil
-# import re
-# import tempfile
-
-# def is_url(string):
-#     return string.startswith("http://") or string.startswith("https://")
-
-# def download_arxiv_source(url, save_path):
-#     """
-#     Downloads the source tarball from an ArXiv URL.
-#     Converts /abs/ links to /e-print/ links automatically.
-#     """
-#     # Convert 'abs' URL to 'e-print' URL (source)
-#     if "/abs/" in url:
-#         url = url.replace("/abs/", "/e-print/")
-    
-#     print(f"⬇️ Downloading source from {url}...")
-#     headers = {'User-Agent': 'Mozilla/5.0'}
-#     response = requests.get(url, headers=headers, stream=True)
-#     response.raise_for_status()
-    
-#     with open(save_path, 'wb') as f:
-#         for chunk in response.iter_content(chunk_size=8192):
-#             f.write(chunk)
-#     return save_path
-
-# def find_main_tex_file(directory):
-#     r"""
-#     Heuristic to find the main .tex file:
-#     1. Looks for a file with \documentclass
-#     2. Prioritizes files named 'main.tex' or 'ms.tex'
-#     """
-#     tex_files = []
-#     for root, dirs, files in os.walk(directory):
-#         for file in files:
-#             if file.endswith(".tex"):
-#                 tex_files.append(os.path.join(root, file))
-
-#     if not tex_files:
-#         raise FileNotFoundError("No .tex files found in the archive.")
-
-#     # Check for \documentclass
-#     for path in tex_files:
-#         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-#             content = f.read()
-#             if r"\documentclass" in content:
-#                 return path
-
-#     return tex_files[0] # Fallback to first found
-
-# def flatten_tex(main_file_path):
-#     r"""
-#     Reads the main .tex file and recursively replaces \input{...} 
-#     with the actual content of the referenced files.
-#     """
-#     base_dir = os.path.dirname(main_file_path)
-    
-#     with open(main_file_path, 'r', encoding='utf-8', errors='ignore') as f:
-#         content = f.read()
-
-#     # Regex to find \input{filename} or \include{filename}
-#     input_pattern = re.compile(r'\\(?:input|include)\{([^}]+)\}')
-
-#     def replace_match(match):
-#         filename = match.group(1)
-#         if not filename.endswith('.tex'):
-#             filename += '.tex'
-        
-#         full_path = os.path.join(base_dir, filename)
-        
-#         if os.path.exists(full_path):
-#             return flatten_tex(full_path)
-#         else:
-#             print(f"⚠️ Warning: Could not find included file {filename}")
-#             return f"% MISSING FILE: {filename}\n"
-
-#     # Replace all occurrences
-#     flattened_content = input_pattern.sub(replace_match, content)
-#     return flattened_content
-
-# def load_tex_from_source(input_source):
-#     """
-#     Main entry point.
-#     input_source: Can be an ArXiv URL or a local .tar path.
-#     Returns: The full flattened LaTeX string.
-#     """
-#     temp_dir = tempfile.mkdtemp()
-#     tar_path = ""
-
-#     try:
-#         # 1. Handle Input Type
-#         if is_url(input_source):
-#             tar_path = os.path.join(temp_dir, "source.tar")
-#             download_arxiv_source(input_source, tar_path)
-#         else:
-#             if not os.path.exists(input_source):
-#                 raise FileNotFoundError(f"File not found: {input_source}")
-#             tar_path = input_source
-
-#         # 2. Extract
-#         extract_path = os.path.join(temp_dir, "extracted")
-#         os.makedirs(extract_path, exist_ok=True)
-        
-#         try:
-#             with tarfile.open(tar_path, "r:*") as tar:
-#                 tar.extractall(path=extract_path)
-#         except tarfile.ReadError:
-#             print("⚠️ Warning: File might not be a standard tarball.")
-#             pass
-
-#         # 3. Find Main File
-#         main_file = find_main_tex_file(extract_path)
-#         print(f"📄 Found main file: {os.path.basename(main_file)}")
-
-#         # 4. Flatten content
-#         full_content = flatten_tex(main_file)
-#         return full_content
-
-#     finally:
-#         # Cleanup temp directory (only if we downloaded it)
-#         if is_url(input_source):
-#             shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-
-
-
-
-
-
 # utils/arxiv_loader.py
 import os
 import tarfile
@@ -283,6 +149,7 @@ def download_arxiv_source(url, save_path):
     Downloads the source tarball from an ArXiv URL.
     Converts /abs/ links to /e-print/ links automatically.
     """
+    # Convert 'abs' URL to 'e-print' URL (source)
     if "/abs/" in url:
         url = url.replace("/abs/", "/e-print/")
     
@@ -298,7 +165,9 @@ def download_arxiv_source(url, save_path):
 
 def find_main_tex_file(directory):
     r"""
-    Heuristic to find the main .tex file.
+    Heuristic to find the main .tex file:
+    1. Looks for a file with \documentclass
+    2. Prioritizes files named 'main.tex' or 'ms.tex'
     """
     tex_files = []
     for root, dirs, files in os.walk(directory):
@@ -316,17 +185,19 @@ def find_main_tex_file(directory):
             if r"\documentclass" in content:
                 return path
 
-    return tex_files[0] 
+    return tex_files[0] # Fallback to first found
 
 def flatten_tex(main_file_path):
     r"""
-    Recursively replaces \input{...} with actual content.
+    Reads the main .tex file and recursively replaces \input{...} 
+    with the actual content of the referenced files.
     """
     base_dir = os.path.dirname(main_file_path)
     
     with open(main_file_path, 'r', encoding='utf-8', errors='ignore') as f:
         content = f.read()
 
+    # Regex to find \input{filename} or \include{filename}
     input_pattern = re.compile(r'\\(?:input|include)\{([^}]+)\}')
 
     def replace_match(match):
@@ -339,44 +210,24 @@ def flatten_tex(main_file_path):
         if os.path.exists(full_path):
             return flatten_tex(full_path)
         else:
+            print(f"⚠️ Warning: Could not find included file {filename}")
             return f"% MISSING FILE: {filename}\n"
 
+    # Replace all occurrences
     flattened_content = input_pattern.sub(replace_match, content)
     return flattened_content
-
-def extract_and_copy_images(source_dir, dest_dir):
-    """
-    Finds images in source_dir and copies them to dest_dir.
-    Returns a list of available image filenames.
-    """
-    valid_exts = {".png", ".jpg", ".jpeg"}
-    found_images = []
-
-    print(f"🖼️ Scanning for images in {source_dir}...")
-
-    for root, dirs, files in os.walk(source_dir):
-        for file in files:
-            ext = os.path.splitext(file)[1].lower()
-            if ext in valid_exts:
-                src_path = os.path.join(root, file)
-                # Flatten path: if image is in img/plot.png, we copy it as plot.png
-                # This matches how we will reference it in the simple beamer file
-                dest_path = os.path.join(dest_dir, file) 
-                shutil.copy2(src_path, dest_path)
-                found_images.append(file)
-    
-    return found_images
 
 def load_tex_from_source(input_source):
     """
     Main entry point.
-    Returns: (full_content_string, list_of_image_filenames)
+    input_source: Can be an ArXiv URL or a local .tar path.
+    Returns: The full flattened LaTeX string.
     """
     temp_dir = tempfile.mkdtemp()
     tar_path = ""
 
     try:
-        # 1. Handle Input
+        # 1. Handle Input Type
         if is_url(input_source):
             tar_path = os.path.join(temp_dir, "source.tar")
             download_arxiv_source(input_source, tar_path)
@@ -393,22 +244,18 @@ def load_tex_from_source(input_source):
             with tarfile.open(tar_path, "r:*") as tar:
                 tar.extractall(path=extract_path)
         except tarfile.ReadError:
+            print("⚠️ Warning: File might not be a standard tarball.")
             pass
 
-        # 3. Find Main File & Flatten
+        # 3. Find Main File
         main_file = find_main_tex_file(extract_path)
         print(f"📄 Found main file: {os.path.basename(main_file)}")
+
+        # 4. Flatten content
         full_content = flatten_tex(main_file)
-
-        # 4. Extract Images to Current Working Directory
-        current_dir = os.getcwd()
-        images = extract_and_copy_images(extract_path, current_dir)
-        print(f"✅ Extracted {len(images)} images to {current_dir}")
-
-        return full_content, images
+        return full_content
 
     finally:
-        # Cleanup temp directory (only if we created it for download/extraction)
-        # We don't delete the user's original tar file if they provided a local path
-        if is_url(input_source) or os.path.exists(os.path.join(temp_dir, "extracted")):
-             shutil.rmtree(temp_dir, ignore_errors=True)
+        # Cleanup temp directory (only if we downloaded it)
+        if is_url(input_source):
+            shutil.rmtree(temp_dir, ignore_errors=True)
