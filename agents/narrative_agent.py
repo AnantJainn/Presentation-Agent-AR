@@ -100,7 +100,7 @@ def narrative_agent(state):
 
         TASK:
         1. Analyze the structure (Title, Authors, Abstract, Sections, Working Mechanism, Related Work).
-        2. Create a presentation structure (15-18 slides) that should very detail and cover all main things.
+        2. Create a presentation structure (5-8 slides) that should very detail and cover all main things.
         3. **CRITICAL:** The 'content' and 'key_points' must be **PLAIN ENGLISH**. 
             - DO NOT write LaTeX code (e.g. do NOT write \\frac{{a}}{{b}}, write 'a divided by b').
             - DO NOT use backslashes.
