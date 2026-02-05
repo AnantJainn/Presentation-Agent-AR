@@ -30,7 +30,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def call_llm(prompt, system_message="You are a helpful assistant.", model="google/gemini-2.0-flash-lite-preview-02-05:free"):
+def call_llm(prompt, system_message="You are a helpful assistant.", model="upstage/solar-pro-3:free"):
     """
     Calls the OpenRouter API.
     """
